@@ -12,9 +12,11 @@ export class AdjacencyMatrix {
   }
   public addEdge(i: number, j: number) {
     this.a[i][j] = true;
+    this.n++
   }
   public removeEdge(i: number, j: number) {
     this.a[i][j] = false;
+    this.n--
   }
   public hasEdge(i: number, j: number) {
     return this.a[i][j];
