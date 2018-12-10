@@ -1,51 +1,87 @@
-interface IHashMap<T> {
-  get(key: string): T | undefined;
-  set(key: string, item: T): void;
-  toString(): string;
+import { randomBytes } from "crypto";
+
+interface Item<K, V> {
+  key: K;
+  value: V;
 }
 
-interface IBucketItem<T> {
-  key: string;
-  item: T;
-}
+export class HashMap<K, V> {
+  private n = 0;
+  private d = 1;
+  private a: Item<K, V>[][] = [];
+  private z: number;
+  private wordSize = 32;
 
-// hashing with chaining
-// n <= t.length
-export class Hashmap<T> implements IHashMap<T> {
-  private buckets: IBucketItem<T>[][] = [];
-  constructor(private readonly numOfBuckets = 10_000) {
-    for (let i = 0; i < numOfBuckets; i++) {
-      this.buckets.push([]);
-    }
+  constructor() {
+    this.a = new Array(1 << this.d).fill(null).map(() => []);
+    // {1, ....2^w - 1 }
+    this.z = (randomBytes(4).readUInt32BE(0) | 1) >>> 0;
   }
 
-  public set(key: string, item: T) {
-    const bucket = this.buckets[this.hash(key)];
-    for (const bucketItem of bucket) {
-      if (bucketItem.key === key) {
-        bucketItem.item = item;
-        return;
+  public set(key: K, value: V): void {
+    // set item  if exist
+    const item = this.getItem(key);
+    if (item) {
+      item.value = value;
+      return;
+    }
+
+    if (this.n + 1 > this.a.length) {
+      this.resize();
+    }
+
+    const bucket = this.a[this.hash(key)];
+    bucket.push({ key, value });
+    this.n++;
+  }
+
+  public get(key: K): V | null {
+    const item = this.getItem(key);
+    return item !== undefined ? item.value : null;
+  }
+
+  public remove(key: K): V | null {
+    const item = this.get(key);
+    if (!item) {
+      return null;
+    }
+    this.a[this.hash(key)] = this.a[this.hash(key)].filter(
+      item => item.key !== key
+    );
+
+    this.n--;
+    return item;
+  }
+
+  private getItem(key: K): Item<K, V> | undefined {
+    const bucket = this.a[this.hash(key)];
+    return bucket.find(item => item.key === key);
+  }
+
+  private resize() {
+    this.d++;
+    const b: Item<K, V>[][] = new Array(1 << this.d).fill(null).map(() => []);
+    const oldTable = this.a;
+    this.a = b;
+    this.n = 0;
+    for (const bucket of oldTable) {
+      for (const item of bucket) {
+        this.set(item.key, item.value);
       }
     }
-    bucket.push({ key, item });
   }
 
-  public get(key: string): T | undefined {
-    const bucket = this.buckets[this.hash(key)];
-    const item = bucket.find(bucketItem => bucketItem.key === key);
-    return item && item.item;
+  private hash(key: K) {
+    return Math.imul(this.z, this.hashCode(key)) >>> (this.wordSize - this.d);
   }
 
-  public toString() {
-    return JSON.stringify(this.buckets);
-  }
-
-  // should be implemented via multiplicative hashing
-  private hash(key: string): number {
+  private hashCode(key: K) {
+    const keyString = String(key);
     let hash = 0;
-    for (let i = 0; i < key.length; i++) {
-      hash += key.charCodeAt(i);
+    for (let i = 0; i < keyString.length; i++) {
+      hash = Math.imul(hash, 31) + keyString.charCodeAt(i);
+      hash = hash >>> 0;
     }
-    return hash % this.numOfBuckets;
+    return hash;
   }
 }
