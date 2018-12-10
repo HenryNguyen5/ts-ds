@@ -4,7 +4,7 @@ export class AdjacencyList {
   private a: number[][];
   constructor(v: number) {
     // should probably use a DLL here
-    this.a = new Array(v).fill([]);
+    this.a = new Array(v).fill(undefined).map(() => []);
   }
 
   public addEdge(i: number, j: number) {
