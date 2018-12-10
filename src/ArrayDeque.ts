@@ -30,8 +30,9 @@ export class ArrayDeque<T> extends BackingArray<T> implements List<T> {
     if (i < Math.floor(this.n / 2)) {
       // shift all elements left
       this.j = this.j === 0 ? this.a.length : this.j - 1;
-
+      // [1,2,3,4,5]
       for (let k = 0; k < i; k++) {
+        // this will include i being shifted because of our +1 left shift index
         this.a[(this.j + k) % this.a.length] = this.a[
           (this.j + k + 1) % this.a.length
         ];
