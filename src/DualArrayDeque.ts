@@ -1,4 +1,5 @@
 import { ArrayStack } from "./ArrayStack";
+import { List } from "./interfaces/List";
 
 export class DualArrayDeque<T> implements List<T> {
   private front = new ArrayStack<T>(); // stores items in reverse order for fast addition/ removal from the front
